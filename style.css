@@ -1,0 +1,12 @@
+body {
+  font-family: sans-serif;
+  margin: 20px;
+}
+input {
+  margin: 5px;
+}
+#records {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+}

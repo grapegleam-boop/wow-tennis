@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>테니스 클럽 점수 기록</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <h1>🎾 테니스 클럽 점수 기록</h1>
+
+  <form id="gameForm">
+    <label>참석자 이름 4명 입력</label><br>
+    <input type="text" id="p1" placeholder="플레이어1" required>
+    <input type="text" id="p2" placeholder="플레이어2" required>
+    <input type="text" id="p3" placeholder="플레이어3" required>
+    <input type="text" id="p4" placeholder="플레이어4" required>
+    <button type="submit">저장</button>
+  </form>
+
+  <h2>점수 기록</h2>
+  <div id="records"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
