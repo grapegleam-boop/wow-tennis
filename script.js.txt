@@ -1,0 +1,138 @@
+let players = [];
+let games = [];
+
+function addPlayers() {
+  const input = document.getElementById("players").value;
+  players = input.split(",").map(p => p.trim()).filter(p => p);
+  localStorage.setItem("players", JSON.stringify(players));
+  renderPlayerOptions();
+  renderStats();
+}
+
+function renderPlayerOptions() {
+  const selects = ["team1p1", "team1p2", "team2p1", "team2p2"];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = "";
+    players.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function addGame() {
+  const team1 = [document.getElementById("team1p1").value, document.getElementById("team1p2").value];
+  const team2 = [document.getElementById("team2p1").value, document.getElementById("team2p2").value];
+  const score1 = parseInt(document.getElementById("score1").value);
+  const score2 = parseInt(document.getElementById("score2").value);
+
+  if (!team1[0] || !team1[1] || !team2[0] || !team2[1]) {
+    alert("모든 팀원을 선택해주세요!");
+    return;
+  }
+  if (isNaN(score1) || isNaN(score2)) {
+    alert("점수를 입력해주세요!");
+    return;
+  }
+
+  games.push({ team1, team2, score1, score2, date: Date.now() });
+  localStorage.setItem("games", JSON.stringify(games));
+  renderGames();
+  renderStats();
+}
+
+function renderGames() {
+  const gameList = document.getElementById("gameList");
+  gameList.innerHTML = "";
+  games.forEach(g => {
+    const d = new Date(g.date);
+    const li = document.createElement("li");
+    li.textContent = `${d.toLocaleDateString()} ${g.team1.join(",")} (${g.score1}) vs ${g.team2.join(",")} (${g.score2})`;
+    gameList.appendChild(li);
+  });
+}
+
+function renderStats() {
+  const statsDiv = document.getElementById("stats");
+  statsDiv.innerHTML = "";
+
+  if (players.length === 0) return;
+
+  const startDate = document.getElementById("startDate").value ? 
+    new Date(document.getElementById("startDate").value).getTime() : null;
+  const endDate = document.getElementById("endDate").value ? 
+    new Date(document.getElementById("endDate").value).getTime() : null;
+
+  let filteredGames = games;
+  if (startDate) filteredGames = filteredGames.filter(g => g.date >= startDate);
+  if (endDate) filteredGames = filteredGames.filter(g => g.date <= endDate + 86400000);
+
+  let stats = {};
+  let headToHead = {};
+  players.forEach(p => {
+    stats[p] = { games: 0, wins: 0, losses: 0 };
+    headToHead[p] = {};
+    players.forEach(op => {
+      if (op !== p) headToHead[p][op] = { wins: 0, losses: 0 };
+    });
+  });
+
+  filteredGames.forEach(g => {
+    const winner = g.score1 > g.score2 ? g.team1 : g.team2;
+    const loser = g.score1 > g.score2 ? g.team2 : g.team1;
+
+    winner.forEach(p => {
+      stats[p].games++;
+      stats[p].wins++;
+      loser.forEach(op => {
+        headToHead[p][op].wins++;
+      });
+    });
+    loser.forEach(p => {
+      stats[p].games++;
+      stats[p].losses++;
+      winner.forEach(op => {
+        headToHead[p][op].losses++;
+      });
+    });
+  });
+
+  statsDiv.innerHTML += `<h4>기간별 통계 (${filteredGames.length} 경기)</h4>`;
+  players.forEach(p => {
+    const s = stats[p];
+    const winRate = s.games > 0 ? ((s.wins / s.games) * 100).toFixed(1) : 0;
+    statsDiv.innerHTML += `<p><strong>${p}</strong>: ${s.games}경기, ${s.wins}승 ${s.losses}패 (승률 ${winRate}%)</p>`;
+
+    // 상대 전적 승률순 정렬
+    let h2hArr = Object.keys(headToHead[p]).map(op => {
+      const h = headToHead[p][op];
+      const total = h.wins + h.losses;
+      const rate = total > 0 ? (h.wins / total) * 100 : 0;
+      return { op, wins: h.wins, losses: h.losses, rate };
+    });
+
+    h2hArr.sort((a, b) => b.rate - a.rate);
+
+    statsDiv.innerHTML += `<ul>`;
+    h2hArr.forEach(h => {
+      statsDiv.innerHTML += `<li>vs ${h.op}: ${h.wins}승 ${h.losses}패 (승률 ${h.rate.toFixed(1)}%)</li>`;
+    });
+    statsDiv.innerHTML += `</ul>`;
+  });
+}
+
+window.onload = function() {
+  if (localStorage.getItem("players")) {
+    players = JSON.parse(localStorage.getItem("players"));
+    document.getElementById("players").value = players.join(", ");
+    renderPlayerOptions();
+  }
+  if (localStorage.getItem("games")) {
+    games = JSON.parse(localStorage.getItem("games"));
+    renderGames();
+  }
+  renderStats();
+};
